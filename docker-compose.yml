@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+
+  db:
+    image: postgres:15.0-alpine
+    restart: always
+    container_name: db-container
+    ports:
+      - '5432:5432'
+    networks:
+      - backend
+    environment:
+      POSTGRES_DB: "marketplace_db"
+      POSTGRES_USER: "user"
+      POSTGRES_PASSWORD: "password"
+    volumes:
+      - ./src/main/resources/db/init/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - pgdata:/var/lib/postgresql/data
+
+  server:
+    build: .
+    restart: no
+    container_name: server-container
+    ports:
+      - "8090:8080"
+    networks:
+      - backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db-container:5432/marketplace_db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+    depends_on:
+      - db
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  pgdata:
